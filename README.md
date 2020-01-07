@@ -1,5 +1,5 @@
 # Neural Style Transfer (Parent-Child Art)  
-My 7-year-old is an infinite source of inspiration! We worked together to create a parent-child art using neural style transfer.  
+My 7-year-old daughter is an infinite source of inspiration! We worked together to create a parent-child art using neural style transfer.  
 
 感動の父と娘（7才）の共同作品です。画風変換。  
   
