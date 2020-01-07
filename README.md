@@ -16,8 +16,8 @@ My 7-year-old is an infinite source of inspiration! We worked together to create
 ![Kaiju](img/kaiju.jpg)  
 
 ## Code  
-- **[Less style weight code](https://github.com/yuibi/neural_style_transfer_crayon/blob/master/style_transfer_crayon_low_style_weight.ipynb.ipynb)**  
+- **[Less style weight code](https://github.com/yuibi/neural_style_transfer_crayon/blob/master/style_transfer_crayon_low_style_weight.ipynb)**  
 ![Less_style_weight](img/surfing_napoleon_crayon_content_3000.png)  
-- **[More style weight code](https://github.com/yuibi/neural_style_transfer_crayon/blob/master/style_transfer_crayon_high_style_weight.ipynb.ipynb)**  
+- **[More style weight code](https://github.com/yuibi/neural_style_transfer_crayon/blob/master/style_transfer_crayon_high_style_weight.ipynb)**  
 ![More_style_weight](img/surfing_napoleon_crayon_style_3000.png)  
 
