@@ -74,81 +74,83 @@ class StyleContentModel(tf.keras.models.Model):
     
 def clip_0_1(image:resource_variable_ops=None):
       return tf.clip_by_value(image, clip_value_min=0.0, clip_value_max=1.0)
-    
-def style_content_loss(outputs:dict=None,
-                       style_weight:float=None,
-                       content_weight:float=None,
-                       num_style_layers:int=None,
-                       num_content_layers:int=None,
-                       style_targets:dict=None,
-                       content_targets:dict=None):
-    
-    style_outputs = outputs['style']
-    content_outputs = outputs['content']
-    style_loss = tf.add_n([tf.reduce_mean((style_outputs[name]-style_targets[name])**2) 
-                           for name in style_outputs.keys()])
-    style_loss *= style_weight / num_style_layers
 
-    content_loss = tf.add_n([tf.reduce_mean((content_outputs[name]-content_targets[name])**2) 
-                             for name in content_outputs.keys()])
-    content_loss *= content_weight / num_content_layers
-    loss = style_loss + content_loss
-    return loss
+class neural_style_transfer_model():
+    def __init__(self,
+                 image:resource_variable_ops=None,
+                 style_image:resource_variable_ops=None,
+                 content_image:resource_variable_ops=None,
+                 style_layers:list=None,
+                 content_layers:list=None):
+        self.image = image
+        self.style_image = style_image
+        self.content_image = content_image
+        self.style_layers = style_layers
+        self.content_layers = content_layers
+        self.num_style_layers = len(style_layers)
+        self.num_content_layers = len(content_layers)
 
-@tf.function()
-def train_step(image:resource_variable_ops=None,
-               style_weight:float=1e-1,
-               content_weight:float=1e3,
-               num_style_layers:int=5,
-               num_content_layers:int=1,
-               style_targets:dict=None,
-               content_targets:dict=None,
-               extractor:dict=None,
-               opt:Adam=None,
-               total_variation_weight:int=30):
-    
-    with tf.GradientTape() as tape:
-        outputs = extractor(image)
-        loss = style_content_loss(outputs, style_weight, content_weight, num_style_layers, num_content_layers, style_targets, content_targets)
-        loss += total_variation_weight*tf.image.total_variation(image)
+        # Model that returns the style and content tensors
+        self.extractor = StyleContentModel(style_layers, content_layers)
+        self.style_targets = self.extractor(style_image)['style']
+        self.content_targets = self.extractor(content_image)['content']
 
-    grad = tape.gradient(loss, image)
-    opt.apply_gradients([(grad, image)])
-    image.assign(clip_0_1(image))
+    def style_content_loss(self,
+                           outputs:dict=None):
+        style_outputs = outputs['style']
+        content_outputs = outputs['content']
+        style_loss = tf.add_n([tf.reduce_mean((style_outputs[name]-self.style_targets[name])**2) 
+                            for name in style_outputs.keys()])
+        style_loss *= self.style_weight / self.num_style_layers
 
-def train_model(epochs:int=30,
-                steps_per_epoch:int=100,
-                save_image:bool=False,
-                img_name:str=None,
-                display_image:bool=False,
-                image:resource_variable_ops=None,
+        content_loss = tf.add_n([tf.reduce_mean((content_outputs[name]-self.content_targets[name])**2) 
+                                for name in content_outputs.keys()])
+        content_loss *= self.content_weight / self.num_content_layers
+        loss = style_loss + content_loss
+        return loss
+
+    def compile(self,
                 style_weight:float=1e-1,
                 content_weight:float=1e3,
-                num_style_layers:int=5,
-                num_content_layers:int=1,
-                style_targets:dict=None,
-                content_targets:dict=None,
-                extractor:dict=None,
                 opt:Adam=None,
                 total_variation_weight:int=30):
-    
-    step = 0
-    for n in range(epochs):
-        for m in range(steps_per_epoch):
-            step += 1
-            train_step(image, style_weight, content_weight, num_style_layers, num_content_layers, style_targets, content_targets, extractor, opt, total_variation_weight)
-    
-        if save_image:
-            # Save image after every epoch
-            tensor_to_image(image).save(f"{img_name}_{step}.png")
-        
-        if display_image:
-            # Display image after every epoch
-            display.clear_output(wait=True)
-            display.display(tensor_to_image(image))
+        self.style_weight = style_weight
+        self.content_weight = content_weight
+        self.opt = opt
+        self.total_variation_weight = total_variation_weight
+
+    def train_step(self):
+        with tf.GradientTape() as tape:
+            outputs = self.extractor(self.image)
+            loss = self.style_content_loss(outputs)
+            loss += self.total_variation_weight*tf.image.total_variation(self.image)
+
+        grad = tape.gradient(loss, self.image)
+        self.opt.apply_gradients([(grad, self.image)])
+        self.image.assign(clip_0_1(self.image))
+
+    def fit(self,
+            epochs:int=30,
+            steps_per_epoch:int=100,
+            save_image:bool=False,
+            img_name:str=None,
+            display_image:bool=False):
+        step = 0
+        for n in range(epochs):
+            for m in range(steps_per_epoch):
+                step += 1
+                self.train_step()
+
+            if save_image:
+                # Save image after every epoch
+                tensor_to_image(self.image).save(f"{img_name}_{step}.png")
             
-        print(f"Train step: {step}")
+            if display_image:
+                # Display image after every epoch
+                display.clear_output(wait=True)
+                display.display(tensor_to_image(self.image))
+                
+            print(f"Train step: {step}")
 
-    return image
-
-    
+    def show_img(self):
+        return tensor_to_image(self.image)
